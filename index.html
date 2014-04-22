@@ -119,7 +119,8 @@ If the substring is not found, the function prints an error message and returns.
 All said and done, supplying the correct string ("PASSWORD=wrong") caused <i>authorize</i> to return <b>1</b> to <i>main</i>. Upon returning, <i>main</i> provided you with an excellent monkey-themed ASCII art shown below in Figure 4.
 </p>
 <pre>
-$ ruby -e 'str = "PASSWORD=wrong"; puts [str.length].pack("V") + str' | nc 54.198.150.4 666
+$ ruby -e 'str = "PASSWORD=wrong"; puts [str.length].pack("V") + str' | \
+ nc 54.198.150.4 666
 If you guess the password, I will give you a reward!
 
         .-"-.            .-"-.            .-"-.           .-"-.
@@ -154,7 +155,8 @@ All in all, this bug was fairly easy to spot. The trick in this challenge was no
 The next thing we did was to try various lengths of our favorite character (0x41). We started by over-writing just a small amount of data after the buffer. The following excerpt shows what we saw when we overwrote only 32 bytes beyond the buffer.
 </p>
 <pre>
-$ ruby -e 'str = "A" * (1024+32); puts [str.length].pack("V") + str' | nc 54.197.145.219 666
+$ ruby -e 'str = "A" * (1024+32); puts [str.length].pack("V") + str' | \
+ nc 54.197.145.219 666
 If you guess the password, I will give you a reward!
 BAD FORMAT
 EXPECTED: PASSWORD=[PASSWORD]
