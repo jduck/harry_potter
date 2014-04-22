@@ -30,7 +30,7 @@ h6{widows:2;padding-top:8pt;line-height:1.15;orphans:2;text-align:left;color:#66
 
 
 <p>
-This year, Accuvant sponsored the annual Plaid CTF event. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result of which is often amazing feats of hacking to be remembered for years to come. Solving challenges teaches you new things and/or reinforces existsing knowledge. We've been consistently impressed with the PPP team and the CTF events they have put on for the past several years. We were ecstatic to contribute and even took on several of the challenges ourselves. What follows is a close look at the second highest value explotiation challenge from the event.
+Accuvant sponsored the annual Plaid CTF event this year. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result is often amazing feats of hacking that will remembered for years to come. Solving challenges teaches you new things and reinforces existing knowledge. We've been consistently impressed with the the CTF events the PPP team has put on for the past several years. We were ecstatic to contribute so we took on several of the challenges ourselves. What follows is a close look at the event's second highest value explotiation challenge.
 </p>
 <br />
 <p>
@@ -51,12 +51,12 @@ running at 54.198.150.4:666, we might get an idea of where The Plague as been ke
 </i></p>
 <br />
 <p>
-As we can see from the description, the provided challenge program was listening for us on a TCP port on a remote machine. No other access was provided to said machine. However, the organizers graciously linked to a binary to examine.
+The provided challenge program was listening on a TCP port on a remote machine. No other access was provided to said machine. However, the organizers graciously linked to a binary to examine.
 </p>
 
 <h1>Digging into the Binary</h1>
 <p>
-Opening the binary with IDA Pro showed it was an ELF64 binary for Linux. As such, we didn't have a decompiler handy. Our appetite for assembly was healthy anyway, so we pushed forward. Digging deeper, we quickly located the <i>main</i>
+Opening the binary with IDA Pro showed it was an ELF64 binary for Linux. Unfortunately, we didn't have a decompiler handy. Our appetite for assembly was healthy anyway, so we pushed forward. Digging deeper, we quickly located the <i>main</i>
 function by inspecting the arguments to the call to <i>__libc_start_main</i>, shown below.
 The argument was originally a <i>loc_XXX</i> style name, but we renamed it to <i>main</i> and navigated to it first thing.
 </p>
@@ -71,12 +71,13 @@ Figure 1. <i>_start</i> with the typical call to <i>__libc_start_main</i>.
 </p>
 <br />
 <p>
-After following the <i>main</i> cross-reference, converting the destination instructions to a procedure, and turning on graph mode, we saw the first basic block as follows:
+We followed the <i>main</i> cross-reference and converted the destination instructions to a procedure. Next we toggled graph mode and saw the first basic block, as follows:
 </p>
 <br />
 <p>
-<span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 680.00px; height: 114.00px;">
-<img alt="the first basic block of main" src="images/image01.png" style="width: 680.00px; height: 114.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="the first basic block of main">
+<!-- <span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 680.00px; height: 114.00px;"> -->
+<img alt="the first basic block of main" src="images/image01.png" title="the first basic block of main">
+<!-- style="width: 680.00px; height: 114.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" -->
 </span>
 </p>
 <p>
@@ -88,18 +89,19 @@ The <i>main </i> function starts by using the <i>cerr iostream</i> to display a 
 </p>
 <p>
 <ol type="1">
-  <li>If <i>authorize</i> returns non-zero, the program will go off on a deep code path on which it is not immediately clear what will happen.</li>
-  <li>If it returns zero, <i>main</i> informs the user that they entered the wrong password.</li>
-  <li>The entire <i>main</i> function body appears to be wrapped in a <i>try</i>/<i>catch</i> block. This is evidenced by the floating, seemingly disconnected, basic blocks off to the side.</li>
+  <li>If <i>authorize</i> returns non-zero, the program will go off on a deep code path whose functionality is not immediately clear.</li>
+  <li>If <i>authorize</i> returns zero, <i>main</i> informs the user that they entered the wrong password.</li>
+  <li>The entire <i>main</i> function body appears to be wrapped in a <i>try</i>/<i>catch</i> block. This fact is evidenced by the floating, seemingly disconnected, basic blocks off to the side.</li>
 </ol>
 </p>
 <p>
-The string displayed both prior to calling <i>authorize</i> and when the return value is zero suggests that the program expects a password. However, the password isn't checked in <i>main</i> so we proceeded to examine <i>authorize</i>. The first basic block is shown below.
+The string displayed both prior to calling <i>authorize</i> and when the return value is zero suggests the program expects a password. However, the password isn't checked in <i>main</i> so we proceeded to examine <i>authorize</i>. The first basic block is shown below.
 </p>
 <br />
 <p>
-<span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 381.00px; height: 318.00px;">
-<img alt="the first basic block of authorize" src="images/image02.png" style="width: 381.00px; height: 318.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="the first basic block of authorize">
+<!-- span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 381.00px; height: 318.00px;"> -->
+<img alt="the first basic block of authorize" src="images/image02.png" title="the first basic block of authorize">
+<!-- style="width: 381.00px; height: 318.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" -->
 </span>
 </p>
 <p>
@@ -107,16 +109,16 @@ Figure 3. the first basic block of <i>authorize</i>
 </p>
 <br />
 <p>
-Looking at the local variables the function, we saw a couple of stack buffers. Reading on further in the disassembly, we saw two calls to a function we called <i>do_some_reading</i>. That function takes three parameters: a file descriptor (zero in this case), a destination buffer, and a number of bytes to read. The astute reader might already see a problem (perhaps aided by our comments), but we'll forego that for a moment to finish reversing the function.
+Looking at the function's local variables, we saw a couple of stack buffers. Reading on in the disassembly, we saw two calls to a function we named <i>do_some_reading</i>. That function takes three parameters: a file descriptor (zero in this case), a destination buffer, and a number of bytes to read. The astute reader might already see a problem, but we'll forego that for a moment to finish reversing the function.
 </p>
 <br />
 <p>
-After reading the length-prefixed string, we saw a call to a subroutine which we determined implements the <i>memmem</i> function (a GNU extension). It's looking for the string "PASSWORD" inside the obtained data. 
-If the substring is not found, the function prints an error message and returns. If it is found, The function then creates a SHA512 hash of the string starting 9 bytes in and compares it to a digest at <i>0x404448</i> (in the binary's <i>.rodata</i> section). The plaintext for the hash was easily obtained by simply Googling for it.
+After reading the length-prefixed string, we saw a call to a subroutine which we determined implements the <i>memmem</i> function (a GNU extension). The <i>authorize</i> function uses <i>memmem</i> to look for the string "PASSWORD" inside the input data. 
+If the substring is not found, <i>authorize</i> prints an error message and returns zero. If "PASSWORD" is found, <i>authorize</i> creates a SHA512 hash of the string starting 9 bytes in and compares it to a digest at <i>0x404448</i> (in the binary's <i>.rodata</i> section). Googling for the hash revealed the plaintext value.
 </p>
 <br />
 <p>
-All said and done, supplying the correct string ("PASSWORD=wrong") caused <i>authorize</i> to return <b>1</b> to <i>main</i>. Upon returning, <i>main</i> provided you with an excellent monkey-themed ASCII art shown below in Figure 4.
+Supplying the correct string ("PASSWORD=wrong") caused <i>authorize</i> to return <b>1</b> to <i>main</i>. Upon returning, <i>main</i> provided you with an excellent monkey-themed ASCII art shown below in Figure 4.
 </p>
 <pre>
 $ ruby -e 'str = "PASSWORD=wrong"; puts [str.length].pack("V") + str' | \
@@ -137,22 +139,24 @@ Figure 4. Excellent ASCII art from the challenge creator
 </p>
 <br />
 <p>
-If you didn't specify the correct password or you put your guess in the wrong format, <i>authorize</i> returned <b>0</b> to <i>main</i> and you were told about your failure. Regardless of which output (art, bad pw, bad format) was displayed, the well-defined program flow disconnected you after.
-Because either of these outcomes are largely worthless, we knew that we must have missed something. Obviously this was a red herring, but it was a fun one nevertheless. Thanks! Next, we turned our attention back at the two calls to <i>do_read_something</i>.
+If you didn't specify the correct password or you put your guess in the wrong format, <i>authorize</i> returned <b>0</b> to <i>main</i> and you were told about your failure. Regardless of password correctness, the program disconnected you.
+Being disconnected was clearly at odds with our goal of obtaining a shell.
+This path was a red herring, but it was a fun, nevertheless. Thanks! Next, we turned our attention back at the two calls to <i>do_read_something</i>.
 </p>
-
+ 
 <h1>About the Bug</h1>
 <p>
-Remember from Figure 3 that there are two calls to <i>do_read_something</i>. The first reads a 32-bit integer value into a local variable which we named <i>v_int</i>. The second call uses <i>v_int</i> as the size of the data to read. It reads the data into a local fixed-size stack buffer of 1024 bytes. The issue is that there is no validation or sanitization done on the <i>v_int</i> in between. This results in a stack buffer overflow whenever a value larger than 1024 is specified. Ahh, the undefined behavior that we all know and love...
+Remember from Figure 3 that there are two calls to <i>do_read_something</i>. The first reads a 32-bit integer value into a local variable we named <i>v_int</i>. The second call reads <i>v_int</i> bytes into a stack buffer of 1024 bytes. The root cause issue is a lack of validation or sanitization done on <i>v_int</i>. Specifying more than 1024 bytes results in a stack buffer overflow. Ahh, the undefined behavior that we all know and love...
 </p>
 <br />
 <p>
-All in all, this bug was fairly easy to spot. The trick in this challenge was not finding the bug, but rather figuring out how to exploit it. The <i>authorize</i> function contains stack cookies, which throws a wrench in our proverbial machine. So what could we do?
+The trick in this challenge was not finding the bug, but rather figuring out how to exploit it. The <i>authorize</i> function contains stack cookies, which throws a wrench in our proverbial machine. So what could we do?
 </p>
 
 <h1>Exploring Primitives</h1>
 <p>
-The next thing we did was to try various lengths of our favorite character (0x41). We started by over-writing just a small amount of data after the buffer. The following excerpt shows what we saw when we overwrote only 32 bytes beyond the buffer.
+Next we tried various lengths of our favorite character (0x41). We started by overwriting just a small amount of data after the buffer.
+The following excerpt shows the output we saw when we overwrote only 32 bytes beyond the buffer.
 </p>
 <pre>
 $ ruby -e 'str = "A" * (1024+32); puts [str.length].pack("V") + str' | \
@@ -197,7 +201,9 @@ problem[0x40104d]
 7fbe0aced000-7fbe0acee000 rw-p 0000
 </pre>
 <p>
-This was pretty much expected since we saw some calls to <i>__stack_chk_fail</i>, which indicated that the stack was protected against buffer overflows. Seeing this information had an additional benefit for us. We could see quite a bit of information about the remote process's address space. We could clearly see that NX was enabled. By running this command a couple of times we were able to see that ASLR was enabled for all regions except the binary's base address. We confirmed this by looking at the binary too, just to be safe.
+We expected this output since we saw calls to <i>__stack_chk_fail</i> &emdash; indicating the stack was protected against buffer overflows.
+In addition, this output divulges information about the remote process's address space. 
+We could clearly see that NX was enabled. Running the command a couple of times showed us that ASLR was disabled for the binary. We confirmed these findings by looking at the binary too, just to be safe:
 </p>
 <pre>
 $ execstack -q harry_potter
@@ -206,11 +212,11 @@ $ readelf -a harry_potter | grep 'Type:'
   Type:                              EXEC (Executable file)
 </pre>
 <p>
-From these two commands we can see that the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can at least count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
+These two commands confirm the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
 </p>
 <br />
 <p>
-At this point we spun up an environment to be able to debug the provided binary. We hypothesized that it was running under some kind of <i>inetd</i> setup since it didn't implement any socket functionality itself. We turned to <i>socat</i> to mimic <i>inetd</i>. The following two scripts did the job.
+At this point we spun up an environment to be able to debug the provided binary. We hypothesized that it was running under some kind of <i>inetd</i> setup since it didn't implement any socket functionality. We turned to <i>socat</i> to mimic <i>inetd</i>. The following two scripts did the job.
 </p>
 <pre>
 $ cat listener.sh
@@ -364,7 +370,7 @@ Figure 5. control flow graph of <i>do_read_something</i>
 <br />
 
 <p>
-This function loops trying to read data until one of two things happens: all of the expected data is successfully received or an error occurs. In the case that the latter happens, the function raises an exception using <i>throw</i>. 
+This function loops trying to read data until one of two things happens: all of the expected data is successfully received or an error occurs. In the case the latter happens, <i>do_read_something</i> raises an exception using <i>throw</i>. 
 </p>
 <br />
 <p>
@@ -389,11 +395,10 @@ This was MUCH better!! This is the type of crash one gets when the value about t
 
 <h1>Getting a Shell</h1>
 <p>
-Despite having control of the program counter, we still needed to leak a memory address and use it in a subsequent additonal request. The general strategy was simply to execute <i>system("/bin/sh")</i>. If we could determine the <i>libc</i> binary used and obtain the address of something within then we could construct a payload to spawn a shell and thus obtain the key for the challenge.
-</p>
-<br />
-<p>
-First things first. We had to leak an address from <i>libc</i>. We already experimented with leaking the address of the <i>read</i> function before, so this was a logical choice. But how?
+Despite having control of the program counter, we still needed to leak a memory address and use it in a subsequent request. 
+The general strategy was simply to execute <i>system("/bin/sh")</i> and thus obtain the key for the challenge.
+The first step towards success was constructing a payload based on an address leaked from <i>libc</i>. 
+We already experimented with leaking the address of the <i>read</i> function before, so this was a logical choice. But how?
 </p>
 <br />
 <p>
@@ -411,7 +416,7 @@ Getting the exploit working reliably against the challenge server turned out to 
 
 <h1>Conclusion</h1>
 <p>
-This challenge was very interesting and required devising new exploitation techniques to bypass exploit mitigations. The technique showcased was likely known by very few people at the time. Although this technique only applies in specific circumstances, it none-the-less advances the state of the art in exploitation. Those well versed in Windows exploitation will be quick to see similarities between this technique and the venerable SEH bypass technique. Mix in a few subtle complications stemming from non-deterministism and buffering and it's clear to see why the point value for this challenge was increased during the game. A+++ will hack again!
+This challenge was very interesting and required devising new exploitation techniques to bypass exploit mitigations. The technique showcased was likely known by very few people at the time. Although this technique only applies in specific circumstances, it none-the-less advances the state of the art in exploitation. Those well versed in Windows exploitation will be quick to see similarities between this technique and the venerable SEH bypass technique. Mix in a few subtle complications stemming from non-determinism and buffering and it's clear to see why the point value for this challenge was increased during the game. A+++ will hack again!
 </p>
 
 
