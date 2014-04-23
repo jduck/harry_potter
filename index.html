@@ -28,6 +28,7 @@ h6{widows:2;padding-top:8pt;line-height:1.15;orphans:2;text-align:left;color:#66
 </head>
 <body>
 
+<div style="width: 640px">
 
 <p>
 Accuvant sponsored the annual Plaid CTF event this year. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result is often amazing feats of hacking that will remembered for years to come. Solving challenges teaches you new things and reinforces existing knowledge. We've been consistently impressed with the the CTF events the PPP team has put on for the past several years. We were ecstatic to contribute so we took on several of the challenges ourselves. What follows is a close look at the event's second highest value explotiation challenge.
@@ -402,7 +403,7 @@ We already experimented with leaking the address of the <i>read</i> function bef
 </p>
 <br />
 <p>
-Looking again at <i>main</i> we saw an opportunity to re-use the code that printed the password prompt. We chose the location 0x400eee, which corresponds to the call to <i>std::ostream::operator&lt;&lt;</i> call in <i>main</i>. We quickly put together a small Return Oriented Programming (ROP) gadget sequence. We set the <i>rsi</i> and <i>read</i> registers to the addresses of <i>read</i> in the GOT and <i>std::cerr</i>, respectively. Testing the memory disclosure exploit successfully gave us the address we desired. The only limitation to this technique was that output would terminate at the first NUL byte. This caused problems on occasion (when the leaked address contained a NUL) but nothing running the exploit again couldn't solve. :)
+Looking again at <i>main</i> we saw an opportunity to re-use the code that printed the password prompt. We chose the location 0x400eee, which corresponds to the call to <i>std::ostream::operator&lt;&lt;</i> call in <i>main</i>. We quickly put together a small Return Oriented Programming (ROP) gadget sequence. We set the <i>rsi</i> and <i>rdi</i> registers to the addresses of <i>read</i> in the GOT and <i>std::cerr</i>, respectively. Testing the memory disclosure exploit successfully gave us the address we desired. The only limitation to this technique was that output would terminate at the first NUL byte. This caused problems on occasion (when the leaked address contained a NUL) but nothing running the exploit again couldn't solve. :)
 </p>
 <br />
 <p>
@@ -416,9 +417,10 @@ Getting the exploit working reliably against the challenge server turned out to 
 
 <h1>Conclusion</h1>
 <p>
-This challenge was very interesting and required devising new exploitation techniques to bypass exploit mitigations. The technique showcased was likely known by very few people at the time. Although this technique only applies in specific circumstances, it none-the-less advances the state of the art in exploitation. Those well versed in Windows exploitation will be quick to see similarities between this technique and the venerable SEH bypass technique. Mix in a few subtle complications stemming from non-determinism and buffering and it's clear to see why the point value for this challenge was increased during the game. A+++ will hack again!
+This challenge was very interesting and required exploring new exploitation techniques to bypass exploit mitigations. The technique showcased was likely known by very few people at the time. Although this technique only applies in specific circumstances, it none-the-less advances the state of the art in exploitation. Those well versed in Windows exploitation will be quick to see similarities between this technique and the venerable SEH bypass technique. Mix in a few subtle complications stemming from non-determinism and buffering and it's clear to see why the point value for this challenge was increased during the game. A+++ will hack again!
 </p>
 
+</div>
 
 </body>
 </html>
