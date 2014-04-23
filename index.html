@@ -31,7 +31,7 @@ h6{widows:2;padding-top:8pt;line-height:1.15;orphans:2;text-align:left;color:#66
 <div style="width: 640px">
 
 <p>
-Accuvant sponsored the annual Plaid CTF event this year. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result is often amazing feats of hacking that will remembered for years to come. Solving challenges teaches you things and reinforces existing knowledge. We've been consistently impressed with the CTF events the PPP team has put on for the past several years. We were ecstatic to contribute so we took on several of the challenges ourselves. What follows is a close look at the event's second highest value exploitation challenge.
+Accuvant sponsored the annual Plaid CTF event this year. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result is often amazing feats of hacking that will be remembered for years to come. Solving challenges teaches you things and reinforces existing knowledge. We've been consistently impressed with the CTF events the PPP team has put on for the past several years. We were ecstatic to sponsor and participate. We also took on several of the challenges ourselves. What follows is a close look at the event's second highest value exploitation challenge.
 </p>
 <br />
 <p>
@@ -112,7 +112,7 @@ If the substring is not found, <i>authorize</i> prints an error message and retu
 </p>
 <br />
 <p>
-Supplying the correct string ("PASSWORD=wrong") caused <i>authorize</i> to return <b>1</b> to <i>main</i>. Upon returning, <i>main</i> provided you with an excellent monkey-themed ASCII art shown below in Figure 4.
+Supplying the correct string ("PASSWORD=wrong") caused <i>authorize</i> to return <b>1</b> to <i>main</i>. Upon returning, <i>main</i> displayed the excellent monkey-themed ASCII art shown in Figure 4.
 </p>
 <pre>
 $ ruby -e 'str = "PASSWORD=wrong"; puts [str.length].pack("V") + str' | \
@@ -149,7 +149,7 @@ The trick in this challenge was not finding the bug, but rather figuring out how
 
 <h1>Exploring Primitives</h1>
 <p>
-Next we tried various lengths of our favorite character (0x41). We started by overwriting just a small amount of data after the buffer.
+Next we tried sending various lengths of our favorite character (0x41). We started by overwriting just a small amount of data after the buffer.
 Figure 5 shows the output we saw when we overwrote only 32 bytes beyond the buffer.
 </p>
 <pre>
@@ -214,7 +214,7 @@ Figure 6. Verifying exploit mitigations present
 </p>
 <br />
 <p>
-The two commands in Figure 6 confirm the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
+The two commands in Figure 6 confirm that although the binary has a non-executable stack, it does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
 </p>
 <br />
 <p>
@@ -240,7 +240,7 @@ With the ability to debug, we continued trying larger and larger overwrite lengt
 
 <h2>Crash 1 - 1060 bytes</h2>
 <p>
-The first crash we saw occurred while unwinding the stack deep in the compiler runtime. It happens while generating the stack trace that is included in the cookie failure output. An excerpt from the debugging session is presented in Figure 8.
+The next crash we saw occurred while unwinding the stack deep in the compiler runtime. It happens while generating the stack trace that is included in the output on the <i>__stack_chk_fail</i> path. An excerpt from the debugging session is presented in Figure 8.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -265,7 +265,7 @@ Figure 8. Crash context with 36 bytes overwritten, in <i>_Unwind_Backtrace</i>
 </p>
 <br />
 <p>
-Although the value of <i>rcx</i> was completely controlled, getting full control from this crash didn't look easy. We tried several different values for <i>rcx</i>, which corresponded to saved <i>rip</i> values from previous frames. As long as the value was readable, it led to that value being printed in the stack trace. The algorithm stops when it reaches a NULL <i>rip</i>. When properly terminated, the rest of the error output was printed and the program was aborted as was expected due to the corrupted cookie. Without success, we continued to try larger strings.
+Although the value of <i>rcx</i> was completely controlled, getting full code execution from this crash didn't look easy. We tried several different values for <i>rcx</i>, which corresponded to saved <i>rip</i> values from previous frames. As long as the value was readable, it led to that value being printed in the stack trace. The algorithm stops when it reaches a NULL <i>rip</i>. When properly terminated, the rest of the error output was printed and the program was aborted as was expected due to the corrupted cookie. Without success, we continued to try larger strings.
 </p>
 
 <h2>Crash 2 - 1316 bytes</h2>
@@ -364,7 +364,7 @@ Figure 12. Crash context inside <i>getenv</i>
 </p>
 <br />
 <p>
-This crash occurred inside <i>libc</i></i> code while initializing the heap. Looking deeper, it turned out to be related to the environment variables being corrupted. We could control these pointers, but it wasn't immediately clear how setting various flags for the heap implementation would yield a better primitive. As before, we set the pointer to NULL and tried again. This time, we got the following:
+This crash occurred inside <i>libc</i></i> code while initializing the heap. Looking deeper, it turned out to be related to the environment variables being corrupted. We could control these pointers, but it wasn't immediately clear how setting various flags for the heap implementation would yield a better primitive. As before, we set the pointer to NULL and tried again. This time, the crash shown in Figure 13 appeared.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -386,7 +386,7 @@ Figure 13. Crash context unwinding with <i>_Unwind_RaiseException</i>
 </p>
 <br />
 <p>
-This time we didn't crash while allocating an exception. Rather, we crashed again inside unwinding code. However, this time it was called from <i>__cxa_throw</i> instead of <i>__stack_chk_fail</i>. We also noticed that the program was no longer printing the "BAD FORMAT" error. Instead it printed "EXCEPTION: Error during read". To get a better understanding, we took a closer look at the <i>do_read_something</i> function in Figure 14.
+With this much input, we didn't crash while allocating an exception. Rather, we crashed again inside unwinding code. However, this time it was called from <i>__cxa_throw</i> instead of <i>__stack_chk_fail</i>. We also noticed that the program was no longer printing the "BAD FORMAT" error. Instead it printed "EXCEPTION: Error during read". To get a better understanding, we took a closer look at the <i>do_read_something</i> function in Figure 14.
 </p>
 <br />
 <p>
@@ -421,7 +421,7 @@ Figure 15. Crash context with the original return address restored
 </p>
 <br />
 <p>
-This was MUCH better!! This is the type of crash one gets when the value about to be popped into <i>rip</i> by the <i>retq</i> instruction is not mapped. Setting it to a mapped value would redirect the flow of execution to the specified address. Thus, we had full control of <i>rip</i>. With such a primitive achieved, we started to see the light at the end of the tunnel. We moved towards building our payload that would give us a shell.
+This was MUCH better!! This is the type of crash one gets when the memory address about to be popped into <i>rip</i> by the <i>retq</i> instruction is not mapped. Setting it to a mapped value would redirect the flow of execution to the specified address. Thus, we had full control of <i>rip</i>. With such a primitive achieved, we started to see the light at the end of the tunnel. We moved towards building our payload that would give us a shell.
 </p>
 
 
@@ -430,25 +430,25 @@ This was MUCH better!! This is the type of crash one gets when the value about t
 Despite having control of the program counter, we still needed to leak a memory address and use it in a subsequent request. 
 The general strategy was simply to execute <i>system("/bin/sh")</i> and thus obtain the key for the challenge.
 The first step towards success was constructing a payload based on an address leaked from <i>libc</i>. 
-We already experimented with leaking the address of the <i>read</i> function before, so this was a logical choice. But how?
+We already experimented with leaking the address of the <i>read</i> function before, so this was a logical choice. But how could we keep the session open?
 </p>
 <br />
 <p>
-Looking again at <i>main</i> we saw an opportunity to re-use the code that printed the password prompt. We chose the location 0x400eee, which corresponds to the call to <i>std::ostream::operator&lt;&lt;</i> call in <i>main</i>. We quickly put together a small Return Oriented Programming (ROP) gadget sequence. We set the <i>rsi</i> and <i>rdi</i> registers to the addresses of <i>read</i> in the GOT and <i>std::cerr</i>, respectively. Testing the memory disclosure exploit successfully gave us the address we desired. The only limitation to this technique was that output would terminate at the first NUL byte. This caused problems on occasion (when the leaked address contained a NUL) but nothing running the exploit again couldn't solve. :)
+Looking again at <i>main</i> we saw an opportunity to re-use the code that printed the password prompt. We chose the location 0x400eee, which corresponds to the call to <i>std::ostream::operator&lt;&lt;</i> call in <i>main</i>. We quickly put together a small Return Oriented Programming (ROP) gadget sequence. We used two gadgets to set the <i>rsi</i> and <i>rdi</i> registers to the addresses of <i>read</i> in the GOT and <i>std::cerr</i>, respectively. Testing the memory disclosure exploit successfully gave us the address we desired. The only limitation to this technique was that output would terminate at the first NUL byte. This caused problems on occasion (when the leaked address contained a NUL) but nothing running the exploit again couldn't solve. :)
 </p>
 <br />
 <p>
-What's more though, is that this exploit also happened to re-enter the vulnerable code &mdash; allowing us to trigger the vulnerability again. This is exactly what we needed in order to utilize the information we just leaked. We refactored our exploit to send a secondary dynamic payload built on the leaked information. We tested it successfully locally but it didn't work against the challenge server. Ugh.
+What's more though, is that this exploit also happened to re-enter the vulnerable code &mdash; allowing us to trigger the vulnerability again. This is exactly what we needed in order to utilize the information we just leaked. We refactored our exploit to send a secondary dynamic payload which we built based on the leaked address of <i>read</i> in <i>libc</i>. Unfortunately, it worked in our test environment but didn't work against the challenge server. Ugh.
 </p>
 
 <h1>Improving Reliability</h1>
 <p>
-Getting our exploit working reliably against the challenge server took extra effort. Tracing locally showed that the data received by the second trigger of the vulnerability was somewhat non-deterministic. After some thought, we decided this was likely due to a subtle interaction between the way <i>stdin</i> buffers input and random space added at the bottom of the stack when a process is created. We mostly solved this by sending an initial payload with our ROP chain and then sending 8 bytes at a time until we received the "EXCEPTION" message. Then we could read the leaked data, craft our secondary exploit payload, and send it along reliably. After making these changes, we ran the exploit against the challenge server and obtained a shell.
+Getting our exploit working reliably against the challenge server took extra effort. Tracing locally showed that the data received by the second trigger of the vulnerability was somewhat non-deterministic. After some thought, we decided this was likely due to a subtle interaction between the way <i>stdin</i> buffers input and random space added at the bottom of the stack when a process is created. We solved this by sending an initial payload with our ROP chain and then sending 8 bytes at a time until we received the "EXCEPTION" message. Then we could read the leaked data, craft our secondary exploit payload, and send it along reliably. After making these changes, we ran the exploit against the challenge server and obtained a shell.
 </p>
 
 <h1>Conclusion</h1>
 <p>
-This challenge was very interesting and required exploring new exploitation techniques to bypass exploit mitigations. The technique showcased was likely known by very few people at the time. Although this technique only applies in specific circumstances, it none-the-less advances the state of the art in exploitation. Those well versed in Windows exploitation will be quick to see similarities between this technique and the venerable SEH bypass technique. Mix in a few subtle complications stemming from non-determinism and buffering and it's clear to see why the point value for this challenge was increased during the game. A+++ will hack again!
+This challenge was very interesting and required exploring new exploit mitigation bypass techniques. It is likely that very few people know about the technique showcased. Although this technique only applies in specific circumstances, it none-the-less advances the state of the art in exploitation. Those well versed in Windows exploitation will be quick to see similarities between this technique and the venerable SEH bypass technique. Mix in a few subtle complications stemming from non-determinism and input buffering and it's clear to see why the point value for this challenge was increased during the game. A+++ will hack again!
 </p>
 
 </div>
