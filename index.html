@@ -58,27 +58,23 @@ The provided challenge program was listening on a TCP port on a remote machine. 
 <h1>Digging into the Binary</h1>
 <p>
 Opening the binary with IDA Pro showed it was an ELF64 binary for Linux. Unfortunately, we didn't have a decompiler handy. Our appetite for assembly was healthy anyway, so we pushed forward. Digging deeper, we quickly located the <i>main</i>
-function by inspecting the arguments to the call to <i>__libc_start_main</i>, shown below.
-The argument was originally a <i>loc_XXX</i> style name, but we renamed it to <i>main</i> and navigated to it first thing.
+function by inspecting the arguments to the call to <i>__libc_start_main</i>, shown in Figure 1.
+The argument was originally <i>loc_400EE0</i>, but we renamed it to <i>main</i> and navigated to it first thing.
 </p>
 <br />
 <p>
-<span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 240.00px; height: 226.00px;">
-<img alt="_start calling __libc_start_main" src="images/image00.png" style="width: 240.00px; height: 226.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="_start calling __libc_start_main">
-</span>
+<img alt="_start calling __libc_start_main" src="images/image00.png" title="_start calling __libc_start_main">
 </p>
 <p>
 Figure 1. <i>_start</i> with the typical call to <i>__libc_start_main</i>.
 </p>
 <br />
 <p>
-We followed the <i>main</i> cross-reference and converted the destination instructions to a procedure. Next we toggled graph mode and saw the first basic block, as follows:
+We followed the <i>main</i> cross-reference and converted the destination instructions to a procedure. Next we toggled graph mode and saw the first basic block, which appears in Figure 2.
 </p>
 <br />
 <p>
-<!-- <span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 680.00px; height: 114.00px;"> -->
 <img alt="the first basic block of main" src="images/image01.png" title="the first basic block of main">
-<!-- style="width: 680.00px; height: 114.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" -->
 </span>
 </p>
 <p>
@@ -96,14 +92,11 @@ The <i>main </i> function starts by using the <i>cerr iostream</i> to display a 
 </ol>
 </p>
 <p>
-The string displayed both prior to calling <i>authorize</i> and when the return value is zero suggests the program expects a password. However, the password isn't checked in <i>main</i> so we proceeded to examine <i>authorize</i>. The first basic block is shown below.
+The string displayed both prior to calling <i>authorize</i> and when the return value is zero suggests the program expects a password. However, the password isn't checked in <i>main</i> so we proceeded to examine <i>authorize</i>. The first basic block is is depicted in Figure 3.
 </p>
 <br />
 <p>
-<!-- span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 381.00px; height: 318.00px;"> -->
 <img alt="the first basic block of authorize" src="images/image02.png" title="the first basic block of authorize">
-<!-- style="width: 381.00px; height: 318.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" -->
-</span>
 </p>
 <p>
 Figure 3. the first basic block of <i>authorize</i>
@@ -157,7 +150,7 @@ The trick in this challenge was not finding the bug, but rather figuring out how
 <h1>Exploring Primitives</h1>
 <p>
 Next we tried various lengths of our favorite character (0x41). We started by overwriting just a small amount of data after the buffer.
-The following excerpt shows the output we saw when we overwrote only 32 bytes beyond the buffer.
+Figure 5 shows the output we saw when we overwrote only 32 bytes beyond the buffer.
 </p>
 <pre>
 $ ruby -e 'str = "A" * (1024+32); puts [str.length].pack("V") + str' | \
@@ -202,6 +195,10 @@ problem[0x40104d]
 7fbe0aced000-7fbe0acee000 rw-p 0000
 </pre>
 <p>
+Figure 5. Crash output on the <i>__stack_chk_fail</i> path
+</p>
+<br />
+<p>
 We expected this output since we saw calls to <i>__stack_chk_fail</i> &emdash; indicating the stack was protected against buffer overflows.
 In addition, this output divulges information about the remote process's address space. 
 We could clearly see that NX was enabled. Running the command a couple of times showed us that ASLR was disabled for the binary. We confirmed these findings by looking at the binary too, just to be safe:
@@ -213,11 +210,15 @@ $ readelf -a harry_potter | grep 'Type:'
   Type:                              EXEC (Executable file)
 </pre>
 <p>
-These two commands confirm the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
+Figure 6. Verifying exploit mitigations present
 </p>
 <br />
 <p>
-At this point we spun up an environment to be able to debug the provided binary. We hypothesized that it was running under some kind of <i>inetd</i> setup since it didn't implement any socket functionality. We turned to <i>socat</i> to mimic <i>inetd</i>. The following two scripts did the job.
+These two commands in Figure 6 confirm the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
+</p>
+<br />
+<p>
+At this point we spun up an environment to be able to debug the provided binary. We hypothesized that it was running under some kind of <i>inetd</i> setup since it didn't implement any socket functionality. We turned to <i>socat</i> to mimic <i>inetd</i>. The two scripts in Figure 7 did the job.
 </p>
 <pre>
 $ cat listener.sh
@@ -230,12 +231,16 @@ setsid ./harry_potter 2>&1
 
 </pre>
 <p>
+Figure 7. Scripts to emulate inetd using socat
+</p>
+<br />
+<p>
 With the ability to debug, we continued trying larger and larger overwrite lengths. Each time we saw a new crash we noted it and dug in to see what we could do with it.
 </p>
 
-<h2>Crash 1 - 1056 bytes</h2>
+<h2>Crash 1 - 1060 bytes</h2>
 <p>
-The first crash we saw occurred while unwinding the stack deep in the compiler runtime. It happens while generating the stack trace that is included in the cookie failure output. An excerpt from the debugging session follows:
+The first crash we saw occurred while unwinding the stack deep in the compiler runtime. It happens while generating the stack trace that is included in the cookie failure output. An excerpt from the debugging session in Figure 8.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -256,12 +261,16 @@ at fortify_fail.c:32
 #5  0x00007f82d2792f10 in __stack_chk_fail () at stack_chk_fail.c:29
 </pre>
 <p>
+Figure 8. Crash context with 36 bytes overwritten, in <i>_Unwind_Backtrace</i>
+</p>
+<br />
+<p>
 Although the value of <i>rcx</i> was completely controlled, getting full control from this crash didn't look easy. We tried several different values for <i>rcx</i>, which corresponded to saved <i>rip</i> values from previous frames. As long as the value was readable, it led to that value being printed in the stack trace. The algorithm stops when it reaches a NULL <i>rip</i>. When properly terminated, the rest of the error output was printed and the program was aborted as was expected due to the corrupted cookie. Without success, we continued to try larger strings.
 </p>
 
 <h2>Crash 2 - 1316 bytes</h2>
 <p>
-The next interesting crash happened when we used a string of 1316 bytes. An excerpt from the debugging session follows:
+The next interesting crash happened when we used a string of 1316 bytes. An excerpt from the debugging session follows in Figure 9.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -279,7 +288,11 @@ at fortify_fail.c:32
 #4  0x000000000040134e in ?? ()
 </pre>
 <p>
-This crash was fairly interesting as it was trying to take the length of a string specified by a pointer under our control. It turns out that we corrupted the <i>argv[0]</i> of the program. We tried pointing it to the Global Offset Table (GOT) entry for the <i>read</i> function from <i>libc</i> and got the following:
+Figure 9. Crash context with 292 bytes overwritten
+</p>
+<br />
+<p>
+This crash was fairly interesting as it was trying to take the length of a string specified by a pointer under our control. It turns out that we corrupted the <i>argv[0]</i> of the program. We tried pointing it to the Global Offset Table (GOT) entry for the <i>read</i> function from <i>libc</i> and witnessed the output from Figure 10.
 </p>
 <pre>
 $ ( sleep 2 ; ruby -e 'str = "A" * (1024+256+32); str &lt;&lt; [0x605270,0].pack("V*"); 
@@ -291,12 +304,16 @@ $ ( sleep 2 ; ruby -e 'str = "A" * (1024+256+32); str &lt;&lt; [0x605270,0].pack
 [...]
 </pre>
 <p>
+Figure 10. The address of <i>read</i> in <i>libc</i> leaked
+</p>
+<br />
+<p>
 As you can see from the output, we successfully leaked the value back to ourselves (in this case it was 0x7f74dba2dfd0). After printing this value out, the program crashed in the unwinding code again. We determined this context to be the same call stack as before, so we continued on.
 </p>
 
 <h2>Crash 3 - 1332 bytes</h2>
 <p>
-When passing only a few more bytes, we got a different crash. This time we crashed in the <i>getenv</i> function:
+When passing only a few more bytes, we got a different crash. This time we crashed in the <i>getenv</i> function as seen in Figure 11.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -316,12 +333,16 @@ at fortify_fail.c:32
 #4  0x000000000040134e in ?? ()
 </pre>
 <p>
-Like before, we crashed in code dealing with printing the stack corruption protection failure. This time we corrupted <i>environ[0]</i> . Controlling this means that we could influence several environment related settings. However, we determined none of them would get us closer to a shell. To avoid crashing here, we simply set the pointer value to NULL. After doing so, the crash in the unwinding code reappeared and we continued experimenting with longer lengths.
+Figure 11. Crash context with 308 bytes overwritten
+</p>
+<br />
+<p>
+Like before, we crashed in code dealing with printing the stack corruption protection failure. This time we corrupted <i>environ[0]</i> . Controlling this means that we could influence several environment related settings. However, we determined none of them would get us closer to a shell. To avoid crashing here, we simply set the pointer value to NULL. After doing so, the crash in the unwinding code reappeared again and we continued experimenting with longer lengths.
 </p>
 
 <h2>Crash 4 - >= 9224 bytes</h2>
 <p>
-After the crash inside <i>getenv</i>, we didn't get any more new crashes until we reached a rather large amount of data. An excerpt from the debugging session appears below.
+After the crash inside <i>getenv</i>, we didn't get any more new crashes until we reached a rather large amount of data. Figure 12 shows the resulting debugger output.
 </p>
 <pre>
 Program received signal SIGBUS, Bus error.
@@ -338,6 +359,10 @@ libstdc++.so.6
 #6  0x0000000000401260 in ?? ()
 #7  0x4141414141414141 in ?? ()
 </pre>
+<p>
+Figure 12. Crash context inside <i>getenv</i>
+</p>
+<br />
 <p>
 This crash occurred inside libc code while initializing the heap. Looking deeper, it turned out to be related to the environment variables being corrupted. We could control these pointers, but it wasn't immediately clear how setting various flags for the heap implementation would yield a better primitive. As before, we set the pointer to NULL and tried again. This time, we got the following:
 </p>
@@ -357,16 +382,18 @@ rcx            0x4141414141414141       4702111234474983745
 #5  0x4141414141414141 in ?? ()
 </pre>
 <p>
-This time we didn't crash while allocating an exception. Rather, we crashed again inside unwinding code. However, this time it was called from <i>__cxa_throw</i> instead of <i>__stack_chk_fail</i>. We also noticed that the program was no longer printing the "BAD FORMAT" error. Instead it printed "EXCEPTION: Error during read". To get a better understanding, we took a closer look at the <i>do_read_something</i> function:
+Figure 13. Crash context unwinding with <i>_UnwindRaiseException</i>
 </p>
 <br />
 <p>
-<span style="overflow: hidden; display: inline-block; margin: 0.00px 0.00px; border: 0.00px solid #000000; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px); width: 727.00px; height: 734.00px;">
-<img alt="control flow graph of do_read_something" src="images/image03.png" style="width: 727.00px; height: 734.00px; margin-left: 0.00px; margin-top: 0.00px; transform: rotate(0.00rad) translateZ(0px); -webkit-transform: rotate(0.00rad) translateZ(0px);" title="control flow graph of do_read_something">
-</span>
+This time we didn't crash while allocating an exception. Rather, we crashed again inside unwinding code. However, this time it was called from <i>__cxa_throw</i> instead of <i>__stack_chk_fail</i>. We also noticed that the program was no longer printing the "BAD FORMAT" error. Instead it printed "EXCEPTION: Error during read". To get a better understanding, we took a closer look at the <i>do_read_something</i> function in Figure 14.
+</p>
+<br />
+<p>
+<img alt="control flow graph of do_read_something" src="images/image03.png" title="control flow graph of do_read_something">
 </p>
 <p>
-Figure 5. control flow graph of <i>do_read_something</i>
+Figure 14. control flow graph of <i>do_read_something</i>
 </p>
 <br />
 
@@ -379,7 +406,7 @@ In normal circumstances, there are only two ways to get <i>read</i> to fail. The
 </p>
 <br />
 <p>
-At this point, we were crashing with <i>rcx</i> fully controlled but weren't sure exactly what to set it to. On a whim, we tried setting it to the original return address value (the one there before we smashed it, 0x400f00). Then we got the following crash:
+At this point, we were crashing with <i>rcx</i> fully controlled but weren't sure exactly what to set it to. On a whim, we tried setting it to the original return address value (the one there before we smashed it, 0x400f00). Then we got the crash shown in Figure 15.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -389,6 +416,10 @@ Program received signal SIGSEGV, Segmentation fault.
 (gdb) x/gx $rsp
 0x7fff304222e8: 0x4141414141414141
 </pre>
+<p>
+Figure 15. Crash context with the original return address restored
+</p>
+<br />
 <p>
 This was MUCH better!! This is the type of crash one gets when the value about to be popped into <i>rip</i> by the <i>retq</i> instruction is not mapped. Setting it to a mapped value would redirect the flow of exection to the specified address. Thus, we had full control of <i>rip</i>. With such a primitive achieved, we started to see the light at the end of the tunnel. We moved towards building our payload that would give us a shell.
 </p>
