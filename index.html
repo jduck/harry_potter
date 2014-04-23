@@ -31,7 +31,7 @@ h6{widows:2;padding-top:8pt;line-height:1.15;orphans:2;text-align:left;color:#66
 <div style="width: 640px">
 
 <p>
-Accuvant sponsored the annual Plaid CTF event this year. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result is often amazing feats of hacking that will remembered for years to come. Solving challenges teaches you new things and reinforces existing knowledge. We've been consistently impressed with the the CTF events the PPP team has put on for the past several years. We were ecstatic to contribute so we took on several of the challenges ourselves. What follows is a close look at the event's second highest value explotiation challenge.
+Accuvant sponsored the annual Plaid CTF event this year. It is one of our favorite events of the year for several reasons. First, we believe heavily in the lessons that these exercises teach. The time limits bring a motivating pressure; the result is often amazing feats of hacking that will remembered for years to come. Solving challenges teaches you new things and reinforces existing knowledge. We've been consistently impressed with the CTF events the PPP team has put on for the past several years. We were ecstatic to contribute so we took on several of the challenges ourselves. What follows is a close look at the event's second highest value exploitation challenge.
 </p>
 <br />
 <p>
@@ -78,11 +78,11 @@ We followed the <i>main</i> cross-reference and converted the destination instru
 </span>
 </p>
 <p>
-Figure 2. the first basic block of <i>main</i>
+Figure 2. The first basic block of <i>main</i>
 </p>
 <br />
 <p>
-The <i>main </i> function starts by using the <i>cerr iostream</i> to display a message. Following that, it calls a function that we named <i>authorize</i>. We'll take a closer look at <i>authorize</i> in a moment, but first its important to note three things about <i>main</i>.
+The <i>main </i> function starts by using the <i>cerr iostream</i> to display a message. Following that, it calls a function that we named <i>authorize</i>. We'll take a closer look at <i>authorize</i> in a moment, but first it's important to note three things about <i>main</i>.
 </p>
 <p>
 <ol type="1">
@@ -92,14 +92,14 @@ The <i>main </i> function starts by using the <i>cerr iostream</i> to display a 
 </ol>
 </p>
 <p>
-The string displayed both prior to calling <i>authorize</i> and when the return value is zero suggests the program expects a password. However, the password isn't checked in <i>main</i> so we proceeded to examine <i>authorize</i>. The first basic block is is depicted in Figure 3.
+The string displayed both prior to calling <i>authorize</i> and when the return value is zero suggests the program expects a password. However, the password isn't checked in <i>main</i> so we proceeded to examine <i>authorize</i>. The first basic block is depicted in Figure 3.
 </p>
 <br />
 <p>
 <img alt="the first basic block of authorize" src="images/image02.png" title="the first basic block of authorize">
 </p>
 <p>
-Figure 3. the first basic block of <i>authorize</i>
+Figure 3. The first basic block of <i>authorize</i>
 </p>
 <br />
 <p>
@@ -199,7 +199,7 @@ Figure 5. Crash output on the <i>__stack_chk_fail</i> path
 </p>
 <br />
 <p>
-We expected this output since we saw calls to <i>__stack_chk_fail</i> &emdash; indicating the stack was protected against buffer overflows.
+We expected this output since we saw calls to <i>__stack_chk_fail</i> &mdash; indicating the stack was protected against buffer overflows.
 In addition, this output divulges information about the remote process's address space. 
 We could clearly see that NX was enabled. Running the command a couple of times showed us that ASLR was disabled for the binary. We confirmed these findings by looking at the binary too, just to be safe:
 </p>
@@ -214,7 +214,7 @@ Figure 6. Verifying exploit mitigations present
 </p>
 <br />
 <p>
-These two commands in Figure 6 confirm the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
+The two commands in Figure 6 confirm the remote binary has a non-executable stack and does *NOT* have PIE enabled. This means we can count on the addresses within the binary to remain constant. This is a key factor in successfully exploiting this process.
 </p>
 <br />
 <p>
@@ -240,7 +240,7 @@ With the ability to debug, we continued trying larger and larger overwrite lengt
 
 <h2>Crash 1 - 1060 bytes</h2>
 <p>
-The first crash we saw occurred while unwinding the stack deep in the compiler runtime. It happens while generating the stack trace that is included in the cookie failure output. An excerpt from the debugging session in Figure 8.
+The first crash we saw occurred while unwinding the stack deep in the compiler runtime. It happens while generating the stack trace that is included in the cookie failure output. An excerpt from the debugging session is presented in Figure 8.
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -364,7 +364,7 @@ Figure 12. Crash context inside <i>getenv</i>
 </p>
 <br />
 <p>
-This crash occurred inside libc code while initializing the heap. Looking deeper, it turned out to be related to the environment variables being corrupted. We could control these pointers, but it wasn't immediately clear how setting various flags for the heap implementation would yield a better primitive. As before, we set the pointer to NULL and tried again. This time, we got the following:
+This crash occurred inside <i>libc</i></i> code while initializing the heap. Looking deeper, it turned out to be related to the environment variables being corrupted. We could control these pointers, but it wasn't immediately clear how setting various flags for the heap implementation would yield a better primitive. As before, we set the pointer to NULL and tried again. This time, we got the following:
 </p>
 <pre>
 Program received signal SIGSEGV, Segmentation fault.
@@ -382,7 +382,7 @@ rcx            0x4141414141414141       4702111234474983745
 #5  0x4141414141414141 in ?? ()
 </pre>
 <p>
-Figure 13. Crash context unwinding with <i>_UnwindRaiseException</i>
+Figure 13. Crash context unwinding with <i>_Unwind_RaiseException</i>
 </p>
 <br />
 <p>
@@ -393,7 +393,7 @@ This time we didn't crash while allocating an exception. Rather, we crashed agai
 <img alt="control flow graph of do_read_something" src="images/image03.png" title="control flow graph of do_read_something">
 </p>
 <p>
-Figure 14. control flow graph of <i>do_read_something</i>
+Figure 14. Control flow graph of <i>do_read_something</i>
 </p>
 <br />
 
@@ -421,7 +421,7 @@ Figure 15. Crash context with the original return address restored
 </p>
 <br />
 <p>
-This was MUCH better!! This is the type of crash one gets when the value about to be popped into <i>rip</i> by the <i>retq</i> instruction is not mapped. Setting it to a mapped value would redirect the flow of exection to the specified address. Thus, we had full control of <i>rip</i>. With such a primitive achieved, we started to see the light at the end of the tunnel. We moved towards building our payload that would give us a shell.
+This was MUCH better!! This is the type of crash one gets when the value about to be popped into <i>rip</i> by the <i>retq</i> instruction is not mapped. Setting it to a mapped value would redirect the flow of execution to the specified address. Thus, we had full control of <i>rip</i>. With such a primitive achieved, we started to see the light at the end of the tunnel. We moved towards building our payload that would give us a shell.
 </p>
 
 
@@ -438,12 +438,12 @@ Looking again at <i>main</i> we saw an opportunity to re-use the code that print
 </p>
 <br />
 <p>
-What's more though, is that this exploit also happened to re-enter the vulnerable code -- allowing us to trigger the vulnerability again. This is exactly what we needed in order to utilize the information we just leaked. We refactored our exploit to send a secondary dynamic payload built on the leaked information. We tested it successfully locally but it didn't work against the challenge server. Ugh.
+What's more though, is that this exploit also happened to re-enter the vulnerable code &mdash; allowing us to trigger the vulnerability again. This is exactly what we needed in order to utilize the information we just leaked. We refactored our exploit to send a secondary dynamic payload built on the leaked information. We tested it successfully locally but it didn't work against the challenge server. Ugh.
 </p>
 
 <h1>Improving Reliability</h1>
 <p>
-Getting the exploit working reliably against the challenge server turned out to be a bit of pain. Tracing locally showed that the data received by the second trigger of the vulnerability was somewhat non-deterministic. After some thought, we decided this was likely due to a subtle interaction between the way <i>stdin</i> buffers input and random space added at the bottom of the stack when a process is created. We mostly solved this by sending an initial payload with our ROP chain and then sending 8 bytes at a time until we received the "EXCEPTION" message. Then we could read the leaked data, craft our secondary exploit payload, and send it along reliably. After making these changes, we ran the exploit against the challenge server and obtained a shell.
+Getting our exploit working reliably against the challenge server took extra effort. Tracing locally showed that the data received by the second trigger of the vulnerability was somewhat non-deterministic. After some thought, we decided this was likely due to a subtle interaction between the way <i>stdin</i> buffers input and random space added at the bottom of the stack when a process is created. We mostly solved this by sending an initial payload with our ROP chain and then sending 8 bytes at a time until we received the "EXCEPTION" message. Then we could read the leaked data, craft our secondary exploit payload, and send it along reliably. After making these changes, we ran the exploit against the challenge server and obtained a shell.
 </p>
 
 <h1>Conclusion</h1>
